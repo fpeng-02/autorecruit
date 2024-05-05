@@ -18,13 +18,13 @@ def convert_image_bw(img):
 
 
 def img_to_tags():
-    image_file = Image.open("img/test6.png") # open colour image
+    image_file = Image.open("img/test.png") # open colour image
 
     resutls = convert_image_bw(image_file)
     print(pytesseract.image_to_string(resutls[0]))
     print(pytesseract.image_to_string(resutls[1]))
 
-
+    
 
 
 

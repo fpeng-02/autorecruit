@@ -1,6 +1,9 @@
 from paddleocr import PaddleOCR,draw_ocr
 from PIL import ImageFont
 from PIL import Image
+import pyautogui as pyag
+import time
+
 
 tag_list = ["guard",
     "sniper",
@@ -137,8 +140,51 @@ def draw_result(result,img_path):
 def combo_testing():
     return
 
+def get_coords(all_pos,rare_tags):
+
+    if not rare_tags:
+        return []
+    unique_tags = set(rare_tags[0][1])
+    coords = []
+
+    for x in unique_tags:
+        for y in all_pos:
+            if y[1] == x:
+                coords.append(y[0])
+    return coords
+
+def recruit_page_inputs(coords):
+    #print(coords)
+    for x in coords:
+        pyag.moveTo(x[0][0],x[0][1])
+        pyag.mouseDown()
+        pyag.mouseUp()
+
+    #TODO: get rid of magic #s
+    try:
+        hour_loc = pyag.locateOnScreen("img/hour_adjust.png",confidence=0.9)
+        pyag.moveTo(hour_loc[0]+50,hour_loc[1]+250)
+        pyag.mouseDown()
+        pyag.mouseUp()
+    except pyag.ImageNotFoundException:
+        pass
+
+    confirm_loc = pyag.locateOnScreen("img/confirm_button.png",confidence=0.8)
+    pyag.moveTo(confirm_loc[0]+50,confirm_loc[1]+50)
+
+    pyag.mouseDown()
+    pyag.mouseUp()
+
+
+
 if __name__ == "__main__":
-    img_path = './img/test9.jpg'
+
+    pyag.getWindowsWithTitle("Arknights")[0].minimize()
+    pyag.getWindowsWithTitle("Arknights")[0].maximize()
+    time.sleep(0.1)
+    img_path = './img/screenie.png'
+    im1 = pyag.screenshot(img_path)
+
 
     words = get_img_words(img_path)
 
@@ -146,9 +192,20 @@ if __name__ == "__main__":
 
     x = words_to_tags(words)
     print(x)
-    valid_tags = tags_to_combos(x)
-    print(valid_tags)
+    rare_tags = tags_to_combos(x)
+    print(rare_tags)
+
+
+    if (rare_tags and rare_tags[0][0] >= 5):
+        print("Very Rare Tag Discovered! Stopping Execution")
+        exit()
+    else:
+        coords = get_coords(x,rare_tags)
+        print(coords)
+        recruit_page_inputs(coords)
+    
 
 
 
+#Look into doing the operations 
     
