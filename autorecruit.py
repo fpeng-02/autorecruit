@@ -1,9 +1,15 @@
-from paddleocr import PaddleOCR,draw_ocr
-from PIL import ImageFont
-from PIL import Image
-import pyautogui as pyag
 import time
 
+time1 = time.perf_counter()
+from paddleocr import PaddleOCR,draw_ocr
+from PIL import Image
+import pyautogui as pyag
+time2 = time.perf_counter()
+print(time2-time1)
+
+
+arknights_title = "Arknights"
+img_path = './img/screenie.png'
 
 tag_list = ["guard",
     "sniper",
@@ -91,22 +97,30 @@ tag_dict = {
 }
 
 def get_img_words(img_path):
-    ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
-    result = ocr.ocr(img_path, cls=True)
+    time1 = time.perf_counter()
+    ocr = PaddleOCR(lang='en', enable_mkldnn = True) # need to run only once to download and load model into memory
+    result = ocr.ocr(img_path, cls=False)
+    time2 = time.perf_counter()
+    print(time2-time1)
     return result
 
-def words_to_tags(result):
+def get_relevant_words(result):
     curr_tags = []
+    curr_ui_elems = []
     for idx in range(len(result)):
         res = result[idx]
         for line in res:
-            print(line)
             formatted_line = line[1][0].strip().lower()
+            print(formatted_line)
+            #Get relevant UI features
+            if formatted_line[:2] == "01":
+                curr_ui_elems.append((line[0],formatted_line[:2]))
+            #Get all recruitment tags
             if formatted_line in tag_list:
                 curr_tags.append((line[0], formatted_line))
     if len(curr_tags) != 5:
         print("tag count inaccurate")
-    return curr_tags
+    return (curr_tags,curr_ui_elems)
     
 
 
@@ -140,23 +154,33 @@ def draw_result(result,img_path):
 def combo_testing():
     return
 
-def get_coords(all_pos,rare_tags):
+def get_coords(all_pos,rare_tags, ui_pos):
 
     if not rare_tags:
         return []
     unique_tags = set(rare_tags[0][1])
+    
     coords = []
+    for y in all_pos:
 
-    for x in unique_tags:
-        for y in all_pos:
-            if y[1] == x:
-                coords.append(y[0])
+        if y[1] in unique_tags:
+            coords.append(y[0][0])
     return coords
 
+def get_ui_coords(relevant_ui,screen_scale):
+    coords = []
+    print(relevant_ui)
+    for x in relevant_ui:
+        if x[1] == "01":
+            coords.append([x[0][0][0],x[0][0][1]+150])
+    return coords
+    
+
+
 def recruit_page_inputs(coords):
-    #print(coords)
+    print(coords)
     for x in coords:
-        pyag.moveTo(x[0][0],x[0][1])
+        pyag.moveTo(x[0],x[1])
         pyag.mouseDown()
         pyag.mouseUp()
 
@@ -167,32 +191,38 @@ def recruit_page_inputs(coords):
         pyag.mouseDown()
         pyag.mouseUp()
     except pyag.ImageNotFoundException:
-        pass
+        print("Hour not located")
 
     confirm_loc = pyag.locateOnScreen("img/confirm_button.png",confidence=0.8)
     pyag.moveTo(confirm_loc[0]+50,confirm_loc[1]+50)
 
-    pyag.mouseDown()
-    pyag.mouseUp()
+    #pyag.mouseDown()
+    #pyag.mouseUp()
 
+def take_sceenshot():
+    arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
+    arknights_window.activate()
+    time.sleep(0.1)
 
+    im = pyag.screenshot()
+    im.save(img_path)
+    return im
 
 if __name__ == "__main__":
 
-    pyag.getWindowsWithTitle("Arknights")[0].minimize()
-    pyag.getWindowsWithTitle("Arknights")[0].maximize()
-    time.sleep(0.1)
-    img_path = './img/screenie.png'
-    im1 = pyag.screenshot(img_path)
-
+    #Try a different method to bring window to forefront
+    im = take_sceenshot()
+    
 
     words = get_img_words(img_path)
 
-    draw_result(words,img_path)
+    #draw_result(words,img_path)
 
-    x = words_to_tags(words)
-    print(x)
-    rare_tags = tags_to_combos(x)
+    relevant_tags,relevant_ui = get_relevant_words(words)
+    print(relevant_ui)
+
+    print(relevant_tags)
+    rare_tags = tags_to_combos(relevant_tags)
     print(rare_tags)
 
 
@@ -200,9 +230,11 @@ if __name__ == "__main__":
         print("Very Rare Tag Discovered! Stopping Execution")
         exit()
     else:
-        coords = get_coords(x,rare_tags)
-        print(coords)
-        recruit_page_inputs(coords)
+        coords = get_coords(relevant_tags,rare_tags,relevant_ui)
+        ui_coords = get_ui_coords(relevant_ui,None)
+        total_coords = coords+ui_coords
+        print(total_coords)
+        recruit_page_inputs(total_coords)
     
 
 
