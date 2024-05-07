@@ -5,7 +5,7 @@ from paddleocr import PaddleOCR,draw_ocr
 from PIL import Image
 import pyautogui as pyag
 time2 = time.perf_counter()
-print(time2-time1)
+print(f"import runtime: {time2-time1}")
 
 
 arknights_title = "Arknights"
@@ -101,7 +101,7 @@ def get_img_words(img_path):
     ocr = PaddleOCR(lang='en', enable_mkldnn = True) # need to run only once to download and load model into memory
     result = ocr.ocr(img_path, cls=False)
     time2 = time.perf_counter()
-    print(time2-time1)
+    print(f"ocr runtime: {time2-time1}")
     return result
 
 def get_relevant_words(result):
@@ -113,6 +113,9 @@ def get_relevant_words(result):
             formatted_line = line[1][0].strip().lower()
             print(formatted_line)
             #Get relevant UI features
+            #"tap" is from "tap to refresh" and is used to indicate a refresh is availilbe and to anchor the confirm buttom
+            #"con" is from "contacting hr" and is used to indicate a refresh is not availilbe and to anchor the confirm buttom
+            #"01" is from the timer and is used to anchor the time increase button
             if formatted_line[:2] == "01":
                 curr_ui_elems.append((line[0],formatted_line[:2]))
             if formatted_line[:3] == "tap" or formatted_line[:3] == "con":
@@ -122,7 +125,7 @@ def get_relevant_words(result):
             if formatted_line in tag_list:
                 curr_tags.append((line[0], formatted_line))
     if len(curr_tags) != 5:
-        print("tag count inaccurate")
+        print("Tag count is inaccurate! (not 5)")
     return (curr_tags,curr_ui_elems)
     
 
@@ -141,9 +144,7 @@ def tags_to_combos(loc_tags):
     return sorted(rare_tag_list, reverse=True, key=lambda x : x[0])
 
 
-def draw_result(result,img_path):
-    # draw result
-    
+def draw_result(result,img_path):    
     result = result[0]
     image = Image.open(img_path).convert('RGB')
     boxes = [line[0] for line in result]
@@ -154,7 +155,6 @@ def draw_result(result,img_path):
     im_show.save('result.jpg')
 
 def get_coords(all_pos,rare_tags):
-
     if not rare_tags:
         return []
     unique_tags = set(rare_tags[0][1])
@@ -174,25 +174,21 @@ def get_confirm_coords(relevant_ui,screen_scale):
 
     coords = []
     print(relevant_ui)
-    #This order only words since the ocr finds "01" first and "tap" second.
     confirm = None
     for x in relevant_ui:
         if x[1] == "01":
             coords.append([x[0][0][0], x[0][0][1] + (time_ui_height_multiplier * height)])
         if x[1] == "tap" or x[1] == "con":
             confirm = x 
-            
+    #Ensure the confirm is the last thing to be added to the list
     coords.append([confirm[0][0][0], confirm[0][0][1] + (confirm_ui_height_multiplier * height)])
-
     return coords
     
 def get_refresh_coords(relevant_ui, screen_scale):
-
     width = screen_scale.width
     height = screen_scale.height
     refresh_ui_height_multiplier = -0.05
     refresh_ui_width_multiplier = 0.05
-
     confirm_refresh_height_multiplier = 0.03
 
     coords = []
@@ -231,35 +227,41 @@ def refresh_availible(relevant_ui):
     raise Exception(f"tap/con not located on screen, ui coords: {relevant_ui}")
 
 def run_recruit():
+    #Bring Arknights window to the forefront
     window_size = activate_window()
     time.sleep(0.1)
+    #Take the screenshot and save it as img/screenie.png
     im = take_sceenshot()
     
+    #Run OCR to get the text from the image
     words = get_img_words(img_path)
-
     #draw_result(words,img_path)
 
+    #Process the results of the OCR to get relevant text.
+    #This includes the recruitment tags and certain other text that will be used as anchors for other UI elements
     relevant_tags,relevant_ui = get_relevant_words(words)
-    print(relevant_ui)
-    print(relevant_tags)
+    print(f"relevant ui: {relevant_ui}")
+    print(f"relevant tags: {relevant_tags}")
+    #From the tags, we extract any rare tag combos (robot, 4 star)
     rare_tags = tags_to_combos(relevant_tags)
-    print(rare_tags)
+    print(f"rare tags: {rare_tags}")
 
-    #add refresh logic 
-    "contacting hr"
+    #Check if no rare tags are present, and if a refresh is availible, if so we refresh and run recruitment again.
     if (not rare_tags and refresh_availible(relevant_ui)):
         refresh_coords = get_refresh_coords(relevant_ui, window_size)
         recruit_page_inputs(refresh_coords)
         print("Refreshing!")
         run_recruit()
+    #If we have a 5 star or above, we stop recruitment since 5 stars should be up to the user to select.
     elif (rare_tags and rare_tags[0][0] >= 5):
         print("Very Rare Tag Discovered! Stopping Execution")
         exit()
+    #Otherwise we run through and do the recruitment as normal. If 3 star no tags are selected (for now).
     else:
         coords = get_coords(relevant_tags,rare_tags)
         ui_coords = get_confirm_coords(relevant_ui,window_size)
         total_coords = coords+ui_coords
-        print(total_coords)
+        print(f"total coords: {total_coords}")
         recruit_page_inputs(total_coords)
 
 if __name__ == "__main__":
