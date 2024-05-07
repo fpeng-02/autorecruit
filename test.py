@@ -27,8 +27,7 @@ arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
 arknights_window.activate()
 
 
-arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
-arknights_window.activate()
+
 time.sleep(0.1)
 
 im = pyag.screenshot()
@@ -41,5 +40,9 @@ im1 = im.crop((left, top, right, bottom))
 im1.save(img_path)
 
 
-'''
-pyag.moveTo(648,150)
+
+arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
+arknights_window.activate()
+print(arknights_window.size)
+'''#638.0, 669.0
+pyag.moveTo(656,460)
