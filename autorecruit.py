@@ -152,7 +152,7 @@ def draw_result(result,img_path):
     scores = [line[1][1] for line in result]
     im_show = draw_ocr(image, boxes, txts, scores, font_path='./fonts/simfang.ttf')
     im_show = Image.fromarray(im_show)
-    im_show.save('result.jpg')
+    im_show.save('img/result.jpg')
 
 def get_coords(all_pos,rare_tags):
     if not rare_tags:
@@ -173,7 +173,6 @@ def get_confirm_coords(relevant_ui,screen_scale):
     confirm_ui_height_multiplier = 0.15
 
     coords = []
-    print(relevant_ui)
     confirm = None
     for x in relevant_ui:
         if x[1] == "01":
@@ -201,7 +200,6 @@ def get_refresh_coords(relevant_ui, screen_scale):
     raise Exception(f"tap not located on screen in a refresh scenario, coords: {relevant_ui}")
 
 def recruit_page_inputs(coords):
-    print(coords)
     for x in coords:
         pyag.moveTo(x[0],x[1])
         pyag.mouseDown()
@@ -251,6 +249,7 @@ def run_recruit():
         refresh_coords = get_refresh_coords(relevant_ui, window_size)
         recruit_page_inputs(refresh_coords)
         print("Refreshing!")
+        time.sleep(0.3)
         run_recruit()
     #If we have a 5 star or above, we stop recruitment since 5 stars should be up to the user to select.
     elif (rare_tags and rare_tags[0][0] >= 5):
