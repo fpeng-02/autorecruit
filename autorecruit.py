@@ -6,14 +6,15 @@ from PIL import Image
 import pyautogui as pyag
 time2 = time.perf_counter()
 print(f"import runtime: {time2-time1}")
+import keyboard
 
-
+#add support for windows not named Arknights
 arknights_title = "Arknights"
-img_path = './img/screenie.png'
+img_path = './screenie.png'
 
 tag_list = ["guard",
     "sniper",
-    "defender",
+    "defender", 
     "medic",
     "supporter",
     "caster",
@@ -207,6 +208,8 @@ def recruit_page_inputs(coords):
 
 def activate_window():
     arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
+
+
     arknights_window.activate()
     window_size = arknights_window.size
     return window_size
@@ -223,6 +226,13 @@ def refresh_availible(relevant_ui):
         if x[1] == "con":
             return False
     raise Exception(f"tap/con not located on screen, ui coords: {relevant_ui}")
+
+def run_recruit_wrap():
+    try:
+        run_recruit()
+    except Exception:
+        print("misc exception")
+        return
 
 def run_recruit():
     #Bring Arknights window to the forefront
@@ -264,9 +274,12 @@ def run_recruit():
         recruit_page_inputs(total_coords)
 
 if __name__ == "__main__":
-    run_recruit()
 
-    
+    hotkey = 'alt+t'
+    keyboard.add_hotkey(hotkey, run_recruit_wrap)
+    print(f"Waiting for hotkey: {hotkey}")
+    keyboard.wait()
+
     
 
 

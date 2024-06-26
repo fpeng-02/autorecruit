@@ -1,5 +1,6 @@
 import pyautogui as pyag
 import time
+import keyboard
 arknights_title = "Arknights"
 img_path = './img/screenie.png'
 '''
@@ -45,4 +46,14 @@ arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
 arknights_window.activate()
 print(arknights_window.size)
 '''#638.0, 669.0
-pyag.moveTo(656,460)
+#pyag.moveTo(656,460)
+
+
+def print_ding():
+    print("ding")
+    exit()
+
+hotkey = 'alt+t'
+keyboard.add_hotkey(hotkey, print_ding)
+print(f"Waiting for hotkey: {hotkey}")
+keyboard.wait()
