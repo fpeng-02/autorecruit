@@ -1,6 +1,64 @@
 import pyautogui as pyag
 import time
 import keyboard
+import json
+
+tag_dict = {
+    6: [("top operator",
+         [["top operator"]])
+    ],
+    5: [
+        ("senior operator",
+         [["senior operator"]]),
+        ("summon",
+         [["summon"]]),
+        ("debuff",
+         [["specialist"], ["fast-redeploy"], ["aoe"], ["melee"], ["supporter"]]),
+        ("support",
+         [["dp-recovery"], ["vanguard"], ["survival"], ["supporter"]]),
+        ("crowd-control",
+         [["fast-redeploy"], ["specialist"],["supporter"],["vanguard"],["melee"],["dp-recovery"],["slow"]]),
+        ("nuker",
+         [["ranged"], ["sniper"],["aoe"],["caster"]]),
+        ("shift",
+         [["slow"],["dps"],["defense"],["defender"]]),
+        ("specialist",
+         [["slow"],["survival"]]),
+        ("defense",
+         [["guard"],["ranged"],["caster"],["aoe"]]),
+        ("dps",
+         [["defense"],["defender"],["supporter"],["aoe"]]),
+        ("survival",
+         [["defense"],["defender"],["supporter"]]),
+        ("healing",
+         [["dps"],["caster"]]),
+        ("slow",
+         [["dps", "caster"]]) #lol
+    ],
+    4: [
+        ("fast-redeploy",
+         [["fast-redeploy"]]),
+        ("crowd-control",
+         [["crowd-control"]]),
+        ("debuff",
+         [["debuff"]]),
+        ("support",
+         [["support"]]),
+        ("nuker",
+         [["nuker"]]),
+        ("shift",
+         [["shift"]]),
+        ("specialist",
+         [["specialist"]]),
+        ("survival",
+         [["ranged"],["sniper"]]),
+        ("healing",
+         [["dp-recovery"],["vanguard"],["supporter"]]),
+        ("slow",
+         [["healing"],["dps"],["caster"],["aoe"],["sniper"],["melee"],["guard"]])
+    ]
+}
+
 arknights_title = "Arknights"
 img_path = './img/screenie.png'
 '''
@@ -48,7 +106,7 @@ print(arknights_window.size)
 '''#638.0, 669.0
 #pyag.moveTo(656,460)
 
-
+'''
 def print_ding():
     print("ding")
     exit()
@@ -57,3 +115,7 @@ hotkey = 'alt+t'
 keyboard.add_hotkey(hotkey, print_ding)
 print(f"Waiting for hotkey: {hotkey}")
 keyboard.wait()
+'''
+
+with open('tag_combos.json', 'w') as fp:
+    json.dump(tag_dict, fp)

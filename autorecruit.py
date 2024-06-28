@@ -1,5 +1,6 @@
 import time
-
+import json
+import traceback
 time1 = time.perf_counter()
 from paddleocr import PaddleOCR,draw_ocr
 from PIL import Image
@@ -10,7 +11,8 @@ import keyboard
 
 #add support for windows not named Arknights
 arknights_title = "Arknights"
-img_path = './screenie.png'
+img_path = './data/screenie.png'
+tag_path = './data/tag_combos.json'
 
 tag_list = ["guard",
     "sniper",
@@ -41,6 +43,7 @@ tag_list = ["guard",
     "summon",
     "robot"]
 
+'''
 tag_dict = {
     6: [("top operator",
          [["top operator"]])
@@ -96,6 +99,7 @@ tag_dict = {
          [["healing"],["dps"],["caster"],["aoe"],["sniper"],["melee"],["guard"]])
     ]
 }
+'''
 
 def get_img_words(img_path):
     time1 = time.perf_counter()
@@ -129,9 +133,15 @@ def get_relevant_words(result):
         print("Tag count is inaccurate! (not 5)")
     return (curr_tags,curr_ui_elems)
     
-
+def load_tag_json():
+    fp = open(tag_path, 'r')
+    tag_dict = json.load(fp)
+    #print(tag_dict)
+    fp.close()
+    return tag_dict
 
 def tags_to_combos(loc_tags):
+    tag_dict = load_tag_json()
     tags = [x[1] for x in loc_tags]
     rare_tag_list = []
     for rarity in tag_dict:
@@ -139,7 +149,7 @@ def tags_to_combos(loc_tags):
             if tag[0] in tags:
                 for x in tag[1]:
                     if all([(y in tags) for y in x]):
-                        rare_tag_list.append((rarity, x + [tag[0]]))         
+                        rare_tag_list.append((int(rarity), x + [tag[0]]))         
             else:
                 continue
     return sorted(rare_tag_list, reverse=True, key=lambda x : x[0])
@@ -208,9 +218,11 @@ def recruit_page_inputs(coords):
 
 def activate_window():
     arknights_window = pyag.getWindowsWithTitle(arknights_title)[0]
-
-
-    arknights_window.activate()
+    try:
+        arknights_window.activate()
+    except:
+        arknights_window.minimize()
+        arknights_window.maximize()
     window_size = arknights_window.size
     return window_size
 
@@ -230,8 +242,9 @@ def refresh_availible(relevant_ui):
 def run_recruit_wrap():
     try:
         run_recruit()
-    except Exception:
-        print("misc exception")
+    except Exception as ex:
+        print("Error:")
+        print(traceback.format_exc())
         return
 
 def run_recruit():
@@ -262,8 +275,8 @@ def run_recruit():
         time.sleep(0.3)
         run_recruit()
     #If we have a 5 star or above, we stop recruitment since 5 stars should be up to the user to select.
-    elif (rare_tags and rare_tags[0][0] >= 5):
-        print("Very Rare Tag Discovered! Stopping Execution")
+    elif (rare_tags and (rare_tags[0][0] >= 5)):
+        print("Very Rare Tag Discovered! Stopping Execution: " + str(rare_tags))
         exit()
     #Otherwise we run through and do the recruitment as normal. If 3 star no tags are selected (for now).
     else:
@@ -279,6 +292,7 @@ if __name__ == "__main__":
     keyboard.add_hotkey(hotkey, run_recruit_wrap)
     print(f"Waiting for hotkey: {hotkey}")
     keyboard.wait()
+    print("finish")
 
     
 
