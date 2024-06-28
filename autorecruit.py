@@ -1,18 +1,18 @@
+
 import time
 import json
 import traceback
-time1 = time.perf_counter()
 from paddleocr import PaddleOCR,draw_ocr
 from PIL import Image
 import pyautogui as pyag
-time2 = time.perf_counter()
-print(f"import runtime: {time2-time1}")
 import keyboard
 
 #add support for windows not named Arknights
 arknights_title = "Arknights"
 img_path = './data/screenie.png'
 tag_path = './data/tag_combos.json'
+hotkey = 'alt+t'
+
 
 tag_list = ["guard",
     "sniper",
@@ -43,8 +43,8 @@ tag_list = ["guard",
     "summon",
     "robot"]
 
-'''
-tag_dict = {
+
+default_tag_dict = {
     6: [("top operator",
          [["top operator"]])
     ],
@@ -99,7 +99,6 @@ tag_dict = {
          [["healing"],["dps"],["caster"],["aoe"],["sniper"],["melee"],["guard"]])
     ]
 }
-'''
 
 def get_img_words(img_path):
     time1 = time.perf_counter()
@@ -112,6 +111,7 @@ def get_img_words(img_path):
 def get_relevant_words(result):
     curr_tags = []
     curr_ui_elems = []
+    print("Screen Transcription: ")
     for idx in range(len(result)):
         res = result[idx]
         for line in res:
@@ -123,7 +123,7 @@ def get_relevant_words(result):
             #"01" is from the timer and is used to anchor the time increase button
             if formatted_line[:2] == "01":
                 curr_ui_elems.append((line[0],formatted_line[:2]))
-            if formatted_line[:3] == "tap" or formatted_line[:3] == "con":
+            if formatted_line[:3] == "tap" or formatted_line[:3] == "con" or formatted_line[:3] == "off":
                 curr_ui_elems.append((line[0],formatted_line[:3]))
             
             #Get all recruitment tags
@@ -134,10 +134,15 @@ def get_relevant_words(result):
     return (curr_tags,curr_ui_elems)
     
 def load_tag_json():
-    fp = open(tag_path, 'r')
-    tag_dict = json.load(fp)
-    #print(tag_dict)
-    fp.close()
+    try:
+        fp = open(tag_path, 'r')
+        tag_dict = json.load(fp)
+        #print(tag_dict)
+        fp.close()
+    except Exception:
+        print("Error Loading Tag JSON files, defaulting to tags from 2024/1/16")
+        tag_dict = default_tag_dict
+
     return tag_dict
 
 def tags_to_combos(loc_tags):
@@ -288,15 +293,10 @@ def run_recruit():
 
 if __name__ == "__main__":
 
-    hotkey = 'alt+t'
     keyboard.add_hotkey(hotkey, run_recruit_wrap)
     print(f"Waiting for hotkey: {hotkey}")
     keyboard.wait()
     print("finish")
 
-    
-
-
-
-#Look into doing the operations 
+#Look into doing the operations
     
